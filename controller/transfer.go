@@ -41,7 +41,7 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request) {
 	} else if contentLength == "" {
 		fmt.Fprintln(w, "you must specify a content-length")
 	} else {
-		session := Session{make(chan []byte), contentLength}
+		session := Session{make(chan []byte, 2048), contentLength}
 		transfer.sessions[filename] = session
 		performTransferRead(r, session)
 		fmt.Fprintln(w, "done")
