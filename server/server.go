@@ -36,7 +36,6 @@ func (ws *WebServer) RegisterController(c controller.Controller) {
 // Start starts the server.
 func (ws *WebServer) Start() {
 	ws.setupServer()
-	fmt.Println("listening on localhost:8080")
 	ws.server.ListenAndServe()
 }
 
@@ -45,8 +44,13 @@ Private
 */
 
 func (ws *WebServer) setupServer() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	ws.server = &http.Server{
-		Addr:           ":8080",
+		Addr:           fmt.Sprintf(":%v", port),
 		ReadTimeout:    60 * time.Second,
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
