@@ -89,6 +89,7 @@ func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename s
 	w.Header().Set("Content-Type", "application/force-download")
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%v\"", filename))
+	w.WriteHeader(200)
 
 	for {
 		bytes, ok := <-session.channel
