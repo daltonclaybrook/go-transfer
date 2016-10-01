@@ -9,5 +9,9 @@
 			"revisionTime": "2016-09-02T15:33:43Z"
 		}
 	],
-	"rootPath": "github.com/daltonclaybrook/go-transfer"
+	"rootPath": "github.com/daltonclaybrook/go-transfer",
+	"heroku": {
+		"install" : [ "./..." ],
+        "goVersion": "go1.7"
+	}
 }
