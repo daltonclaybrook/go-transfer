@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/daltonclaybrook/transfer/controller"
+	"github.com/daltonclaybrook/go-transfer/controller"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"

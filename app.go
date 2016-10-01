@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/daltonclaybrook/transfer/controller"
-	"github.com/daltonclaybrook/transfer/server"
+	"github.com/daltonclaybrook/go-transfer/controller"
+	"github.com/daltonclaybrook/go-transfer/server"
 )
 
 func main() {
