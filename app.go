@@ -7,6 +7,6 @@ import (
 
 func main() {
 	server := server.WebServer{}
-	server.RegisterController(&controller.Transfer{})
+	server.RegisterController(controller.NewTransfer())
 	server.Start()
 }

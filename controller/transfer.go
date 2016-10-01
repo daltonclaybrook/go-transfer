@@ -15,6 +15,10 @@ type Transfer struct {
 	sessions map[string]Session
 }
 
+func NewTransfer() *Transfer {
+	return &Transfer{make(map[string]Session)}
+}
+
 func (transfer *Transfer) Routes() []Route {
 	return []Route{
 		Route{"/{file}.{ext}", []Handler{
@@ -30,6 +34,7 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request) {
 	ext := mux.Vars(r)["ext"]
 	filename := fmt.Sprintf("%v.%v", file, ext)
 	contentLength := r.Header.Get("Content-Length")
+	fmt.Printf("posting file: %v\n", filename)
 
 	if _, ok := transfer.sessions[filename]; ok {
 		fmt.Fprintln(w, "this file is already being transfered")
@@ -48,6 +53,7 @@ func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request) {
 	file := mux.Vars(r)["file"]
 	ext := mux.Vars(r)["ext"]
 	filename := fmt.Sprintf("%v.%v", file, ext)
+	fmt.Printf("getting file: %v\n", filename)
 
 	if session, ok := transfer.sessions[filename]; ok {
 		transfer.performTransferWrite(w, filename, session)

@@ -47,8 +47,8 @@ Private
 func (ws *WebServer) setupServer() {
 	ws.server = &http.Server{
 		Addr:           ":8080",
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	ws.server.ErrorLog = log.New(os.Stdout, "err: ", 0)
