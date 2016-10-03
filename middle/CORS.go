@@ -14,7 +14,7 @@ func (c CORS) Handle(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", c.Origin)
 		w.Header().Set("Access-Control-Allow-Methods", c.Methods)
-		w.Header().Set("Access-Control-Allow-Headers:", c.Headers)
+		w.Header().Set("Access-Control-Allow-Headers", c.Headers)
 		handler(w, r)
 	}
 }
