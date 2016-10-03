@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/daltonclaybrook/go-transfer/controller"
+	"github.com/daltonclaybrook/go-transfer/middle"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -12,25 +13,37 @@ import (
 
 // WebServer is used to create and start a server.
 type WebServer struct {
-	server *http.Server
-	router *mux.Router
+	server     *http.Server
+	router     *mux.Router
+	middleware []middle.Middle
+}
+
+// NewWebServer returns a new initialized instance of WebServer.
+func NewWebServer() *WebServer {
+	ws := &WebServer{}
+	ws.middleware = make([]middle.Middle, 0)
+	ws.router = mux.NewRouter()
+	ws.router.HandleFunc("/", sendUnhandled)
+	http.Handle("/", ws.router)
+	return ws
 }
 
 // RegisterController registers a request handler with the WebServer.
 func (ws *WebServer) RegisterController(c controller.Controller) {
-	if ws.router == nil {
-		ws.router = mux.NewRouter()
-		ws.router.HandleFunc("/", sendUnhandled)
-		http.Handle("/", ws.router)
-	}
-
 	routes := c.Routes()
 	for _, route := range routes {
 		for _, handler := range route.Handlers {
 			fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
-			ws.router.HandleFunc(route.Path, handler.Handler).Methods(handler.Method)
+
+			// temp hack
+			newHandler := ws.middleware[0].Handle(handler.Handler)
+			ws.router.HandleFunc(route.Path, newHandler).Methods(handler.Method)
 		}
 	}
+}
+
+func (ws *WebServer) RegisterMiddleware(m middle.Middle) {
+	ws.middleware = append(ws.middleware, m)
 }
 
 // Start starts the server.
