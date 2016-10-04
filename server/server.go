@@ -8,21 +8,25 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 // WebServer is used to create and start a server.
 type WebServer struct {
-	server     *http.Server
-	router     *mux.Router
-	middleware []middle.Middle
+	server      *http.Server
+	router      *mux.Router
+	middleware  []middle.Middle
+	controllers []controller.Controller
 }
 
 // NewWebServer returns a new initialized instance of WebServer.
 func NewWebServer() *WebServer {
 	ws := &WebServer{}
+	ws.controllers = make([]controller.Controller, 0)
 	ws.middleware = make([]middle.Middle, 0)
 	ws.router = mux.NewRouter()
+
 	ws.router.HandleFunc("/", sendUnhandled)
 	http.Handle("/", ws.router)
 	return ws
@@ -30,18 +34,10 @@ func NewWebServer() *WebServer {
 
 // RegisterController registers a request handler with the WebServer.
 func (ws *WebServer) RegisterController(c controller.Controller) {
-	routes := c.Routes()
-	for _, route := range routes {
-		for _, handler := range route.Handlers {
-			fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
-
-			// temp hack
-			newHandler := ws.middleware[0].Handle(handler.Handler)
-			ws.router.HandleFunc(route.Path, newHandler).Methods(handler.Method)
-		}
-	}
+	ws.controllers = append(ws.controllers, c)
 }
 
+// RegisterMiddleware registers request handlers called before the controller.
 func (ws *WebServer) RegisterMiddleware(m middle.Middle) {
 	ws.middleware = append(ws.middleware, m)
 }
@@ -49,6 +45,7 @@ func (ws *WebServer) RegisterMiddleware(m middle.Middle) {
 // Start starts the server.
 func (ws *WebServer) Start() {
 	ws.setupServer()
+	ws.addRoutesForControllers()
 	ws.server.ListenAndServe()
 }
 
@@ -71,7 +68,32 @@ func (ws *WebServer) setupServer() {
 	ws.server.ErrorLog = log.New(os.Stdout, "err: ", 0)
 }
 
+func (ws *WebServer) addRoutesForControllers() {
+	for _, c := range ws.controllers {
+		routes := c.Routes()
+		for _, route := range routes {
+			methods := make([]string, len(route.Handlers))
+			for idx, handler := range route.Handlers {
+				fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
+
+				ws.router.HandleFunc(route.Path, handler.Handler).Methods(handler.Method)
+				methods[idx] = strings.ToUpper(handler.Method)
+			}
+			ws.router.HandleFunc(route.Path, sendOptionsHandler(methods)).Methods("options")
+		}
+	}
+}
+
 func sendUnhandled(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(404)
 	fmt.Fprintf(w, "Method \"%v\" is not supported by this route.", r.Method)
+}
+
+func sendOptionsHandler(methods []string) func(w http.ResponseWriter, r *http.Request) {
+	methods = append(methods, "OPTIONS")
+	methodString := strings.Join(methods, ", ")
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", methodString)
+		w.Header().Set("Content-Length", "0")
+	}
 }

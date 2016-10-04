@@ -24,7 +24,6 @@ func (transfer *Transfer) Routes() []Route {
 		Route{"/{file}.{ext}", []Handler{
 			Handler{"post", transfer.post},
 			Handler{"get", transfer.get},
-			Handler{"options", transfer.options},
 		}},
 	}
 }
@@ -62,8 +61,6 @@ func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "A transfer has not begun at this endpoint.")
 	}
 }
-
-func (transfer *Transfer) options(w http.ResponseWriter, r *http.Request) {}
 
 /*
 	Helper methods
