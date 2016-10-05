@@ -16,7 +16,7 @@ import (
 type WebServer struct {
 	server      *http.Server
 	router      *mux.Router
-	middleware  []middle.Middle
+	middleware  []middle.Handler
 	controllers []controller.Controller
 }
 
@@ -24,10 +24,10 @@ type WebServer struct {
 func NewWebServer() *WebServer {
 	ws := &WebServer{}
 	ws.controllers = make([]controller.Controller, 0)
-	ws.middleware = make([]middle.Middle, 0)
+	ws.middleware = make([]middle.Handler, 0)
 	ws.router = mux.NewRouter()
 
-	ws.router.HandleFunc("/", sendUnhandled)
+	ws.registerHandler("/", sendUnhandled, "")
 	http.Handle("/", ws.router)
 	return ws
 }
@@ -38,7 +38,7 @@ func (ws *WebServer) RegisterController(c controller.Controller) {
 }
 
 // RegisterMiddleware registers request handlers called before the controller.
-func (ws *WebServer) RegisterMiddleware(m middle.Middle) {
+func (ws *WebServer) RegisterMiddleware(m middle.Handler) {
 	ws.middleware = append(ws.middleware, m)
 }
 
@@ -76,23 +76,31 @@ func (ws *WebServer) addRoutesForControllers() {
 			for idx, handler := range route.Handlers {
 				fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
 
-				ws.router.HandleFunc(route.Path, handler.Handler).Methods(handler.Method)
+				ws.registerHandler(route.Path, handler.Handler, handler.Method)
 				methods[idx] = strings.ToUpper(handler.Method)
 			}
-			ws.router.HandleFunc(route.Path, sendOptionsHandler(methods)).Methods("options")
+			ws.registerHandler(route.Path, sendOptionsHandlerFunc(methods), "options")
 		}
 	}
 }
 
-func sendUnhandled(w http.ResponseWriter, r *http.Request) {
+func (ws *WebServer) registerHandler(path string, handlerFunc middle.ContextFunc, method string) {
+	toRegister := middle.HandlerFuncByApplyingMiddleware(ws.middleware, handlerFunc)
+	route := ws.router.HandleFunc(path, toRegister)
+	if len(method) > 0 {
+		route.Methods(method)
+	}
+}
+
+func sendUnhandled(w http.ResponseWriter, r *http.Request, c middle.Context) {
 	w.WriteHeader(404)
 	fmt.Fprintf(w, "Method \"%v\" is not supported by this route.", r.Method)
 }
 
-func sendOptionsHandler(methods []string) func(w http.ResponseWriter, r *http.Request) {
+func sendOptionsHandlerFunc(methods []string) func(w http.ResponseWriter, r *http.Request, c middle.Context) {
 	methods = append(methods, "OPTIONS")
 	methodString := strings.Join(methods, ", ")
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request, c middle.Context) {
 		w.Header().Set("Allow", methodString)
 		w.Header().Set("Content-Length", "0")
 	}

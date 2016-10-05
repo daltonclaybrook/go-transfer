@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"net/http"
+	"github.com/daltonclaybrook/go-transfer/middle"
 )
 
 // Route describes an endpoint.
@@ -13,7 +13,7 @@ type Route struct {
 // Handler describes functions mapped to http methods.
 type Handler struct {
 	Method  string
-	Handler func(w http.ResponseWriter, r *http.Request)
+	Handler middle.ContextFunc
 }
 
 // Controller handles routes.

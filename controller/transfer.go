@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/daltonclaybrook/go-transfer/middle"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -29,7 +30,7 @@ func (transfer *Transfer) Routes() []Route {
 }
 
 // Used to open a transfer session
-func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request) {
+func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request, c middle.Context) {
 	file := mux.Vars(r)["file"]
 	ext := mux.Vars(r)["ext"]
 	filename := fmt.Sprintf("%v.%v", file, ext)
@@ -49,7 +50,7 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request) {
 }
 
 // Used to receive a transfer
-func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request) {
+func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request, c middle.Context) {
 	file := mux.Vars(r)["file"]
 	ext := mux.Vars(r)["ext"]
 	filename := fmt.Sprintf("%v.%v", file, ext)
