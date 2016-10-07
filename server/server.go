@@ -6,7 +6,6 @@ import (
 	"github.com/daltonclaybrook/go-transfer/middle"
 	"github.com/gorilla/mux"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strings"
