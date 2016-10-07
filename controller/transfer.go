@@ -13,7 +13,7 @@ import (
 type Session struct {
 	channel       chan []byte
 	contentLength int
-	timedOut      bool
+	completed     bool
 }
 
 type Transfer struct {
@@ -49,7 +49,7 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request, c middle.
 		session := &Session{make(chan []byte, 2048), contentLength, false}
 		transfer.sessions[filename] = session
 
-		go closeChannelAfterDelay(session)
+		go transfer.cleanupSessionAfterDelay(session, filename)
 		err := performTransferRead(r, session, contentLength)
 		if err != nil {
 			w.WriteHeader(500)
@@ -68,7 +68,11 @@ func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request, c middle.C
 	fmt.Printf("getting file: %v\n", filename)
 
 	if session, ok := transfer.sessions[filename]; ok {
-		transfer.performTransferWrite(w, filename, session)
+		if session.completed {
+			fmt.Fprintln(w, "This transfer session is over.")
+		} else {
+			transfer.performTransferWrite(w, filename, session)
+		}
 	} else {
 		fmt.Fprintln(w, "A transfer has not begun at this endpoint.")
 	}
@@ -90,7 +94,7 @@ func performTransferRead(r *http.Request, session *Session, length int) error {
 			session.channel <- bytes[0:count]
 		}
 
-		if (err != nil) || (session.timedOut) {
+		if (err != nil) || (session.completed) {
 			close(session.channel)
 			break
 		}
@@ -113,14 +117,16 @@ func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename s
 		if ok {
 			w.Write(bytes)
 		} else {
-			delete(transfer.sessions, filename)
+			session.completed = true
 			break
 		}
 	}
 }
 
-func closeChannelAfterDelay(session *Session) {
+func (transfer *Transfer) cleanupSessionAfterDelay(session *Session, filename string) {
 	time.Sleep(time.Second * 120)
-	session.timedOut = true
+	session.completed = true
 	<-session.channel
+	fmt.Printf("deleting session: %v\n", filename)
+	delete(transfer.sessions, filename)
 }

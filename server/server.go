@@ -68,9 +68,9 @@ func (ws *WebServer) setupServer() {
 
 	ws.registerHandler("/", sendUnhandled, "")
 	ws.server.ErrorLog = log.New(os.Stdout, "err: ", 0)
-	ws.server.ConnState = func(con net.Conn, state http.ConnState) {
-		fmt.Printf("con: %v, state: %v\n", con, state)
-	}
+	// ws.server.ConnState = func(con net.Conn, state http.ConnState) {
+	// 	fmt.Printf("con: %v, state: %v\n", con, state)
+	// }
 }
 
 func (ws *WebServer) addRoutesForControllers() {
