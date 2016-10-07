@@ -27,7 +27,6 @@ func NewWebServer() *WebServer {
 	ws.middleware = make([]middle.Handler, 0)
 	ws.router = mux.NewRouter()
 
-	ws.registerHandler("/", sendUnhandled, "")
 	http.Handle("/", ws.router)
 	return ws
 }
@@ -65,6 +64,8 @@ func (ws *WebServer) setupServer() {
 		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+
+	ws.registerHandler("/", sendUnhandled, "")
 	ws.server.ErrorLog = log.New(os.Stdout, "err: ", 0)
 }
 
@@ -72,16 +73,20 @@ func (ws *WebServer) addRoutesForControllers() {
 	for _, c := range ws.controllers {
 		routes := c.Routes()
 		for _, route := range routes {
-			methods := make([]string, len(route.Handlers))
-			for idx, handler := range route.Handlers {
-				fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
-
-				ws.registerHandler(route.Path, handler.Handler, handler.Method)
-				methods[idx] = strings.ToUpper(handler.Method)
-			}
-			ws.registerHandler(route.Path, sendOptionsHandlerFunc(methods), "options")
+			ws.registerRouteHandlers(route)
 		}
 	}
+}
+
+func (ws *WebServer) registerRouteHandlers(route controller.Route) {
+	methods := make([]string, len(route.Handlers))
+	for idx, handler := range route.Handlers {
+		fmt.Printf("path: %v, method: %v\n", route.Path, handler.Method)
+
+		ws.registerHandler(route.Path, handler.Handler, handler.Method)
+		methods[idx] = strings.ToUpper(handler.Method)
+	}
+	ws.registerHandler(route.Path, sendOptionsHandlerFunc(methods), "options")
 }
 
 func (ws *WebServer) registerHandler(path string, handlerFunc middle.ContextFunc, method string) {
