@@ -6,6 +6,7 @@ import (
 	"github.com/daltonclaybrook/go-transfer/middle"
 	"github.com/gorilla/mux"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -67,6 +68,9 @@ func (ws *WebServer) setupServer() {
 
 	ws.registerHandler("/", sendUnhandled, "")
 	ws.server.ErrorLog = log.New(os.Stdout, "err: ", 0)
+	ws.server.ConnState = func(con net.Conn, state http.ConnState) {
+		fmt.Printf("con: %v, state: %v\n", con, state)
+	}
 }
 
 func (ws *WebServer) addRoutesForControllers() {

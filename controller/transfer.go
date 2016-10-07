@@ -1,23 +1,27 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"github.com/daltonclaybrook/go-transfer/middle"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type Session struct {
 	channel       chan []byte
-	contentLength string
+	contentLength int
+	timedOut      bool
 }
 
 type Transfer struct {
-	sessions map[string]Session
+	sessions map[string]*Session
 }
 
 func NewTransfer() *Transfer {
-	return &Transfer{make(map[string]Session)}
+	return &Transfer{make(map[string]*Session)}
 }
 
 func (transfer *Transfer) Routes() []Route {
@@ -34,18 +38,25 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request, c middle.
 	file := mux.Vars(r)["file"]
 	ext := mux.Vars(r)["ext"]
 	filename := fmt.Sprintf("%v.%v", file, ext)
-	contentLength := r.Header.Get("Content-Length")
+	contentLength, err := strconv.Atoi(r.Header.Get("Content-Length"))
 	fmt.Printf("posting file: %v\n", filename)
 
 	if _, ok := transfer.sessions[filename]; ok {
 		fmt.Fprintln(w, "this file is already being transfered")
-	} else if contentLength == "" {
+	} else if (err != nil) || (contentLength <= 0) {
 		fmt.Fprintln(w, "you must specify a content-length")
 	} else {
-		session := Session{make(chan []byte, 2048), contentLength}
+		session := &Session{make(chan []byte, 2048), contentLength, false}
 		transfer.sessions[filename] = session
-		performTransferRead(r, session)
-		fmt.Fprintln(w, "done")
+
+		go closeChannelAfterDelay(session)
+		err := performTransferRead(r, session, contentLength)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprintln(w, err.Error())
+		} else {
+			fmt.Fprintln(w, "done")
+		}
 	}
 }
 
@@ -67,26 +78,32 @@ func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request, c middle.C
 	Helper methods
 */
 
-func performTransferRead(r *http.Request, session Session) {
+func performTransferRead(r *http.Request, session *Session, length int) error {
+	totalRead := 0
 	for {
 		bytes := make([]byte, 1024)
+		// fmt.Println("reading")
 		count, err := r.Body.Read(bytes)
-		// fmt.Println("read bytes..")
 
-		if (err == nil) && (count > 0) {
-			// fmt.Println("sending to channel")
+		if count > 0 {
+			totalRead += count
 			session.channel <- bytes[0:count]
-			// fmt.Println("sent")
-		} else {
-			// fmt.Printf("error: %v\ncount: %v\n\n", err, count)
+		}
+
+		if (err != nil) || (session.timedOut) {
 			close(session.channel)
 			break
 		}
 	}
+
+	if totalRead < length {
+		return errors.New("transfer could not be completed")
+	}
+	return nil
 }
 
-func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename string, session Session) {
-	w.Header().Set("Content-Length", session.contentLength)
+func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename string, session *Session) {
+	w.Header().Set("Content-Length", strconv.Itoa(session.contentLength))
 	w.Header().Set("Content-Type", "application/force-download")
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%v\"", filename))
@@ -100,4 +117,10 @@ func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename s
 			break
 		}
 	}
+}
+
+func closeChannelAfterDelay(session *Session) {
+	time.Sleep(time.Second * 120)
+	session.timedOut = true
+	<-session.channel
 }
