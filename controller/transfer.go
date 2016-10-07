@@ -30,6 +30,9 @@ func (transfer *Transfer) Routes() []Route {
 			Handler{"post", transfer.post},
 			Handler{"get", transfer.get},
 		}},
+		Route{"/exists/{file}.{ext}", []Handler{
+			Handler{"get", transfer.exists},
+		}},
 	}
 }
 
@@ -75,6 +78,24 @@ func (transfer *Transfer) get(w http.ResponseWriter, r *http.Request, c middle.C
 		}
 	} else {
 		fmt.Fprintln(w, "A transfer has not begun at this endpoint.")
+	}
+}
+
+// Used to check if a transfer exists
+func (transfer *Transfer) exists(w http.ResponseWriter, r *http.Request, c middle.Context) {
+	file := mux.Vars(r)["file"]
+	ext := mux.Vars(r)["ext"]
+	filename := fmt.Sprintf("%v.%v", file, ext)
+	if session, ok := transfer.sessions[filename]; ok {
+		if session.completed {
+			w.WriteHeader(404)
+			fmt.Fprintln(w, "The transfer has already completed.")
+		} else {
+			fmt.Fprintln(w, "Transfer exists")
+		}
+	} else {
+		w.WriteHeader(404)
+		fmt.Fprintln(w, "The transfer does not exist.")
 	}
 }
 
