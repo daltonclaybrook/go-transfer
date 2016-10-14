@@ -7,7 +7,7 @@ import (
 
 func main() {
 	server := swerve.NewServer()
-	server.AddMiddleware(middle.CORS{Origin: "*", Methods: "POST, GET, OPTIONS", Headers: "*"})
+	server.AddMiddleware(middle.CORS{Origin: "*", Methods: "POST, GET, OPTIONS", Headers: "content-type, content-length"})
 	server.AddControl(NewTransfer())
 	server.Start()
 }
