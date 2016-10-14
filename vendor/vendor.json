@@ -1,0 +1,43 @@
+{
+	"comment": "",
+	"heroku": {
+		"goVersion": "go1.7",
+		"install": [
+			"./..."
+		]
+	},
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "E5d0gzE9NZl3u9OP1RRyz50TV+k=",
+			"path": "github.com/daltonclaybrook/swerve",
+			"revision": "93264ef84140a0c8c7dac4aff8e35713f2336cae",
+			"revisionTime": "2016-10-12T18:25:27Z"
+		},
+		{
+			"checksumSHA1": "s8IPIRnOVtAntgS+m8EIAZCbfKs=",
+			"path": "github.com/daltonclaybrook/swerve/control",
+			"revision": "93264ef84140a0c8c7dac4aff8e35713f2336cae",
+			"revisionTime": "2016-10-12T18:25:27Z"
+		},
+		{
+			"checksumSHA1": "VwzAEnjvfX+9e7jULWWq77Opfms=",
+			"path": "github.com/daltonclaybrook/swerve/middle",
+			"revision": "93264ef84140a0c8c7dac4aff8e35713f2336cae",
+			"revisionTime": "2016-10-12T18:25:27Z"
+		},
+		{
+			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
+			"checksumSHA1": "urMd7A9QPAJYY0GZJL9qBhlUmD8=",
+			"path": "github.com/gorilla/mux",
+			"revision": "757bef944d0f21880861c2dd9c871ca543023cba",
+			"revisionTime": "2016-09-20T23:08:13Z"
+		}
+	],
+	"rootPath": "github.com/daltonclaybrook/go-transfer"
+}
