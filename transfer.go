@@ -1,9 +1,10 @@
-package controller
+package main
 
 import (
 	"errors"
 	"fmt"
-	"github.com/daltonclaybrook/go-transfer/middle"
+	"github.com/daltonclaybrook/swerve/control"
+	"github.com/daltonclaybrook/swerve/middle"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -24,14 +25,14 @@ func NewTransfer() *Transfer {
 	return &Transfer{make(map[string]*Session)}
 }
 
-func (transfer *Transfer) Routes() []Route {
-	return []Route{
-		Route{"/{file}.{ext}", []Handler{
-			Handler{"post", transfer.post},
-			Handler{"get", transfer.get},
+func (transfer *Transfer) Routes() []control.Route {
+	return []control.Route{
+		control.Route{Path: "/{file}.{ext}", Handlers: []control.Handler{
+			control.Handler{Method: "post", HandlerFunc: transfer.post},
+			control.Handler{Method: "get", HandlerFunc: transfer.get},
 		}},
-		Route{"/exists/{file}.{ext}", []Handler{
-			Handler{"get", transfer.exists},
+		control.Route{Path: "/exists/{file}.{ext}", Handlers: []control.Handler{
+			control.Handler{Method: "get", HandlerFunc: transfer.exists},
 		}},
 	}
 }

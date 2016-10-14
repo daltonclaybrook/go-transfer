@@ -1,14 +1,13 @@
 package main
 
 import (
-	"github.com/daltonclaybrook/go-transfer/controller"
-	"github.com/daltonclaybrook/go-transfer/middle"
-	"github.com/daltonclaybrook/go-transfer/server"
+	"github.com/daltonclaybrook/swerve"
+	"github.com/daltonclaybrook/swerve/middle"
 )
 
 func main() {
-	server := server.NewWebServer()
-	server.RegisterMiddleware(middle.CORS{Origin: "*", Methods: "POST, GET, OPTIONS", Headers: "*"})
-	server.RegisterController(controller.NewTransfer())
+	server := swerve.NewServer()
+	server.AddMiddleware(middle.CORS{Origin: "*", Methods: "POST, GET, OPTIONS", Headers: "*"})
+	server.AddControl(NewTransfer())
 	server.Start()
 }
