@@ -12,7 +12,7 @@ import (
 )
 
 type Session struct {
-	channel       chan []byte
+	channel       chan byte
 	contentLength int
 	completed     bool
 }
@@ -50,7 +50,7 @@ func (transfer *Transfer) post(w http.ResponseWriter, r *http.Request, c middle.
 	} else if (err != nil) || (contentLength <= 0) {
 		fmt.Fprintln(w, "you must specify a content-length")
 	} else {
-		session := &Session{make(chan []byte, 2048), contentLength, false}
+		session := &Session{make(chan byte, 2048), contentLength, false}
 		transfer.sessions[filename] = session
 
 		go transfer.cleanupSessionAfterDelay(session, filename)
@@ -108,12 +108,14 @@ func performTransferRead(r *http.Request, session *Session, length int) error {
 	totalRead := 0
 	for {
 		bytes := make([]byte, 1024)
-		// fmt.Println("reading")
 		count, err := r.Body.Read(bytes)
 
 		if count > 0 {
 			totalRead += count
-			session.channel <- bytes[0:count]
+			for _, b := range bytes[0:count] {
+				session.channel <- b
+			}
+			fmt.Printf("read total bytes: %v\n", totalRead)
 		}
 
 		if (err != nil) || (session.completed) {
@@ -135,9 +137,9 @@ func (transfer *Transfer) performTransferWrite(w http.ResponseWriter, filename s
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%v\"", filename))
 
 	for {
-		bytes, ok := <-session.channel
+		b, ok := <-session.channel
 		if ok {
-			w.Write(bytes)
+			w.Write([]byte{b})
 		} else {
 			session.completed = true
 			break
